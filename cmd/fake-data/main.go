@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/base64"
 	"flag"
 	"fmt"
 	"math/rand"
@@ -58,14 +59,17 @@ func main() {
 	toDayNumber := tools.TimeToDayNumber(now)
 
 	recordsGenerated := 0
+	tracingKey := make([]byte, 16)
 	for _, token := range tokens {
 		days := rand.Intn(7) + 1
 		records = records[:0]
 		for j := 0; j < days; j++ {
+			_, _ = rand.Read(tracingKey)
+
 			records = append(records, keystorage.KeyRecord{
 				ProcessedAt:     now.Add(time.Hour * -time.Duration(rand.Intn(40))),
 				DayNumber:       toDayNumber - rand.Intn(10),
-				DailyTracingKey: "ABCDEF",
+				DailyTracingKey: base64.StdEncoding.EncodeToString(tracingKey),
 			})
 			recordsGenerated += 1
 
