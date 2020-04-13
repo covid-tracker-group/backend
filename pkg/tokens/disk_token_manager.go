@@ -70,7 +70,7 @@ func (dtm *DiskTokenManager) RetractToken(token string) error {
 	return err
 }
 
-func (dtm *DiskTokenManager) Expire() error {
+func (dtm *DiskTokenManager) Expire(onExpire func(string)) error {
 	dir, err := os.Open(dtm.path)
 	if err != nil {
 		return err
@@ -89,6 +89,7 @@ func (dtm *DiskTokenManager) Expire() error {
 				if err = os.Remove(filepath.Join(dtm.path, entry.Name())); err != nil {
 					return nil
 				}
+				onExpire(entry.Name())
 			}
 		}
 
