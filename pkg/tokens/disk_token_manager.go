@@ -8,10 +8,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"simplon.biz/corona/pkg/config"
 	"simplon.biz/corona/pkg/tools"
 )
 
-const expireTokensAfter = time.Hour * 24 * 7
 const filedirBatchSize = 1000
 
 var errInvalidTokenManagerPath = errors.New("Invalid token manager path")
@@ -77,7 +77,7 @@ func (dtm *DiskTokenManager) Expire() error {
 	}
 	defer dir.Close()
 
-	deleteBefore := time.Now().Add(-expireTokensAfter)
+	deleteBefore := time.Now().Add(-config.ExpireDailyTracingTokensAfter)
 
 	for {
 		entries, err := dir.Readdir(filedirBatchSize)

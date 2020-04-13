@@ -9,12 +9,11 @@ import (
 
 	"github.com/bdlm/log"
 	"github.com/sirupsen/logrus"
+	"simplon.biz/corona/pkg/config"
 )
 
-const appName = "covid-tracker"
-
 var bindAddress = flag.String("bind", "127.0.0.1:8080", "Address for HTTP server")
-var dataPath = flag.String("data", fmt.Sprintf("/var/lib/%s", appName), "Directory to store all data")
+var dataPath = flag.String("data", fmt.Sprintf("/var/lib/%s", config.AppName), "Directory to store all data")
 
 func main() {
 	flag.Parse()

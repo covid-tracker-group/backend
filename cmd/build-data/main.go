@@ -7,14 +7,13 @@ import (
 	"path/filepath"
 
 	"github.com/sirupsen/logrus"
+	"simplon.biz/corona/pkg/config"
 	"simplon.biz/corona/pkg/keystorage"
 	"simplon.biz/corona/pkg/tokens"
 )
 
-const appName = "covid-tracker"
-
-var dataPath = flag.String("data", fmt.Sprintf("/var/lib/%s", appName), "Directory to store all data")
-var dumpPath = flag.String("dump", fmt.Sprintf("/var/cache/%s", appName), "Directory to generated dumps")
+var dataPath = flag.String("data", fmt.Sprintf("/var/lib/%s", config.AppName), "Directory to store all data")
+var dumpPath = flag.String("dump", fmt.Sprintf("/var/cache/%s", config.AppName), "Directory to generated dumps")
 
 func main() {
 	flag.Parse()

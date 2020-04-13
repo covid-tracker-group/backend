@@ -10,14 +10,13 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"simplon.biz/corona/pkg/config"
 	"simplon.biz/corona/pkg/keystorage"
 	"simplon.biz/corona/pkg/tokens"
 	"simplon.biz/corona/pkg/tools"
 )
 
-const appName = "covid-tracker"
-
-var dataPath = flag.String("data", fmt.Sprintf("/var/lib/%s", appName), "Directory to store all data")
+var dataPath = flag.String("data", fmt.Sprintf("/var/lib/%s", config.AppName), "Directory to store all data")
 
 func main() {
 	flag.Parse()
