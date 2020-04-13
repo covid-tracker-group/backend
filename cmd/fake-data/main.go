@@ -74,7 +74,10 @@ func main() {
 			recordsGenerated += 1
 
 		}
-		keyStorage.AddKeyRecords(token, records)
+		err = keyStorage.AddKeyRecords(token, records)
+		if err != nil {
+			log.Fatalf("Error writing key record: %v", err)
+		}
 	}
 	log.Infof("Generated %d daily key records for %d authorisation tokens", recordsGenerated, len(tokens))
 }

@@ -12,12 +12,13 @@ import (
 	"simplon.biz/corona/pkg/tools"
 )
 
+// FormatTagVersion1 is the version tag used to identify the current file version.
+const FormatTagVersion1 = "v1"
 const filedirBatchSize = 1000
 
 var errInvalidKeyStoragePath = errors.New("Invalid key storage path")
-var errFailedToCreateKeyFile = errors.New("Failed to create a key file")
-var errFailedToUpdateKeyFile = errors.New("Failed to update a key file")
 var errListingKeys = errors.New("Error listing keys")
+var errUnsupportedKeyVersion = errors.New("Unsupported key file version")
 
 // DiskKeyStorage is a KeyStorage which stores all data on disk
 type DiskKeyStorage struct {
@@ -39,37 +40,43 @@ func (dks *DiskKeyStorage) pathForAuthorisationCode(authorisationCode string) st
 }
 
 func (dks *DiskKeyStorage) AddKeyRecords(authorisationCode string, records []KeyRecord) error {
-	// TODO: for extra safety we could copy the old file to a temporary file, append data to it and
-	// then move the new file into place.
 	path := dks.pathForAuthorisationCode(authorisationCode)
 
-	f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	newFile, err := tools.NewSecureCSVWriter(path)
 	if err != nil {
-		return fmt.Errorf("%w: %v", errFailedToUpdateKeyFile, err)
+		return err
 	}
-	defer f.Close()
+	defer newFile.Abort()
 
-	writer := csv.NewWriter(f)
+	if err = newFile.Write([]string{FormatTagVersion1, "", ""}); err != nil {
+		return err
+	}
+
+	existingRecords, err := dks.readFromFile((path))
+	if err != nil && !os.IsNotExist(err) {
+		return err
+	}
+
+	recordMap := make(map[string]bool)
+	for _, record := range existingRecords {
+		recordMap[record.DailyTracingKey] = true
+	}
+
 	for _, record := range records {
-		err = writer.Write([]string{
-			strconv.FormatInt(record.ProcessedAt.Unix(), 10),
-			strconv.Itoa(record.DayNumber),
-			record.DailyTracingKey,
-		})
-		if err != nil {
-			return fmt.Errorf("%w: %v", errFailedToUpdateKeyFile, err)
+		_, exists := recordMap[record.DailyTracingKey]
+		if !exists {
+			err = newFile.Write([]string{
+				strconv.FormatInt(record.ProcessedAt.Unix(), 10),
+				strconv.Itoa(record.DayNumber),
+				record.DailyTracingKey,
+			})
+			if err != nil {
+				return err
+			}
 		}
 	}
-	writer.Flush()
-	if err = writer.Error(); err != nil {
-		return fmt.Errorf("%w: %v", errFailedToUpdateKeyFile, err)
-	}
 
-	if err := f.Close(); err != nil {
-		return fmt.Errorf("%w: %v", errFailedToUpdateKeyFile, err)
-	}
-
-	return nil
+	return newFile.Close()
 }
 
 func (dks *DiskKeyStorage) PurgeRecords(authorisationCode string) error {
@@ -105,10 +112,13 @@ func (dks *DiskKeyStorage) ListRecords(recordChan chan RawKeyRecord, errChan cha
 		for _, entry := range entries {
 			if entry.Mode().IsRegular() && filepath.Ext(entry.Name()) == ".csv" {
 				path = filepath.Join(dks.path, entry.Name())
-				err = dks.streamFromFile(path, recordChan)
+				records, err := dks.readFromFile(path)
 				if err != nil {
-					errChan <- fmt.Errorf("%w: error streaming from key file %s: %v", errListingKeys, path, err)
+					errChan <- fmt.Errorf("%w: error reading from key file %s: %v", errListingKeys, path, err)
 					return
+				}
+				for _, record := range records {
+					recordChan <- record
 				}
 			}
 		}
@@ -121,23 +131,31 @@ func (dks *DiskKeyStorage) ListRecords(recordChan chan RawKeyRecord, errChan cha
 	close(recordChan)
 }
 
-func (dks *DiskKeyStorage) streamFromFile(path string, records chan RawKeyRecord) error {
+func (dks *DiskKeyStorage) readFromFile(path string) ([]RawKeyRecord, error) {
 	f, err := os.Open(path)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer f.Close()
+
 	reader := csv.NewReader(f)
 	rows, err := reader.ReadAll()
 	if err != nil {
-		return err
+		return nil, err
 	}
-	for _, row := range rows {
-		records <- RawKeyRecord{
+
+	if rows[0][0] != FormatTagVersion1 {
+		return nil, fmt.Errorf("%w: %v", errUnsupportedKeyVersion, rows[0][0])
+	}
+	rows = rows[1:]
+
+	records := make([]RawKeyRecord, len(rows))
+	for ix, row := range rows {
+		records[ix] = RawKeyRecord{
 			ProcessedAt:     row[0],
 			DayNumber:       row[1],
 			DailyTracingKey: row[2],
 		}
 	}
-	return nil
+	return records, nil
 }
