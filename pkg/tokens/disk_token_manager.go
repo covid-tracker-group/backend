@@ -58,6 +58,14 @@ func (dtm *DiskTokenManager) VerifyToken(token string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
+	if !st.Mode().IsRegular() {
+		return false, nil
+	}
+
+	if st.ModTime().Before(time.Now().Add(-config.ExpireDailyTracingTokensAfter)) {
+		return false, nil
+	}
+
 	return st.Mode().IsRegular(), nil
 }
 
