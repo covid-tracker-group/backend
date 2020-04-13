@@ -66,6 +66,7 @@ func (app *Application) report(w http.ResponseWriter, r *http.Request) {
 		AuthorisationCode: tracingAuthCode,
 	}
 
+	w.WriteHeader(http.StatusCreated)
 	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(response)
 	if err != nil {

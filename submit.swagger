@@ -1,0 +1,203 @@
+swagger: '2.0'
+info:
+  version: '1.0'
+  title: Covid Tracker - data submission
+  description: >-
+    CovidTracker is a simple API to submit and process Covid tracking data.
+    
+    This is for submitting data to, and deleting data from, the Covid
+    tracking system only. To retrieve tracking data the Covid data
+    service must be used.
+    
+    ## Usage
+    
+    The assumed process for use of this API is as follows:
+    
+    1. A user has been using a Covid tracker app on her phone for a while.
+    
+    2. On showing symptons the user has a test for Covid done by a certified health provider.
+    
+    3. On a positive result the health provider will inform the user, and include a special time-limited authorisation code that must be used to submit data to the tracking system.
+    
+    4. The tracking app sends a request to the `/v1/report` API endpoint. This will return an authorisation code that can be used to submit Daily Tracking Keys, and to delete all data.
+    
+    5. A list of Daily Tracking Keys must be submitted to the `/v1/submit-keys` endpoint.
+    
+    ## Privacy
+    
+    In order to minimise privacy risks a number of measures are taking:
+    
+    - no personally identifiable information (PII) is ever submitted
+    
+    - the backend will never store data for more than 14 days, matching the time
+      the Contact Tracking Framework from Apple and Google will store observed
+      beacons.
+
+    - at any time a user can request deletion of all provided data
+    
+    ## References
+    
+    - [Contact Tracing Framework documentation](https://covid19-static.cdn-apple.com/applications/covid19/current/static/contact-tracing/pdf/ContactTracing-FrameworkDocumentation.pdf),
+      Apple, Google
+    - [Contact Tracking Cryptography Specification](https://covid19-static.cdn-apple.com/applications/covid19/current/static/contact-tracing/pdf/ContactTracing-CryptographySpecification.pdf),
+      Apple, Google
+      
+  license:
+    name: MIT
+    url: https://github.com/covid-tracker/backend/LICENSE
+host: localhost:8080
+basePath: /v1
+schemes:
+- http
+consumes:
+- application/json
+produces:
+- application/json
+securityDefinitions:
+  trace_key_auth:
+    type: apiKey
+    name: Authorization
+    in: header
+    description: |
+      Any calls related to submitting or deleting daily tracing keys must be
+      authorised via the HTTP `Authorization` header with a value of `bearer <token>`.
+      The token will be provided by the `/v1/report` endpoint after a positive
+      Covid test result.
+
+paths:
+  /report:
+    post:
+      summary: Report a positive Covid test result
+      description: >-
+        This must be the first API call made after a positive Covid test result
+        by a registered health provider. To authenticate the request is must include
+        a time-limited authorisation code.
+        
+        The response will include an authorisation code that is valid for a maximum
+        of 14 days. This can be used to submit extra Daily Tracking Keys to the
+        tracking database via the `/submit-keys` endpoint. As an optimisation you 
+        may provide an initial list of Daily Tracking Keys in this request
+        via the `keys` key.
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/PositiveRequest'
+      responses:
+        201:
+          description: Report processed successfully
+          schema:
+            $ref: '#/definitions/PositiveResponse'
+          examples:
+            application/json:
+              authorisation: ABC917C_128AO_194719271
+  
+  /submit-keys:
+    post:
+      summary: Submit daily tracking keys
+      description: >-
+        Use this call to submit Daily Tracking Keys to the database. It must
+        include an authorisation code as returned by the `/report` endpoint.
+        
+        Calls to this endpoint are idempotent. If the same data is submitted
+        multiple times any duplicates will be ignored.
+      security:
+        - trace_key_auth: []
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: '#/definitions/SubmitKeys'
+      responses:
+        204:
+          description: Keys submitted successfully
+        401:
+          description:
+            Authorisation is invalid. This can happen if the code was removed
+            via a call to `/v1/remove`, or was never issued.
+    
+  /remove:
+    post:
+      summary: Remove all tracking data for user
+      description: >-
+        This call will remove all data provided by the user. It should only be used
+        when a false positive test result was processed.
+      security:
+        - trace_key_auth: []
+      responses:
+        204:
+          description: Data removed successfully
+        401:
+          description: >-
+            Authorisation is invalid. This can happen if the code was already
+            removed in a previous call, or was never issued.
+  
+definitions:
+  PositiveRequest:
+    title: Covid Positive Test data
+    type: object
+    properties:
+      authorisation:
+        type: string
+        description: >-
+          Authorisation code. This will either be provided by the Health Provider, or
+          by this API as a response to this 
+      keys:
+        type: array
+        description: List of daily tracking keys for days the user was infectious.
+        items:
+          $ref: '#/definitions/DailyTrackingKey'
+    required:
+      - authorisation
+    example:
+      authorisation: A918ZZ
+      keys:
+        - key: U0VDUkVUU0VDUkVUU0VDUg==
+          day_number: 18363
+        - key: MTIzNDU2Nzg5MDEyMzQ1Ng==
+          day_number: 18364
+
+  PositiveResponse:
+    title: Covid Positive Test data
+    type: object
+    properties:
+      authorisation:
+        type: string
+    required:
+      - authorisation
+    example:
+      authorisation: ABC917C_128AO_194719271
+
+  SubmitKeys:
+    title: DTK submit request
+    type: object
+    properties:
+      keys:
+        type: array
+        description: List of daily tracking keys for days the user was infectious.
+        items:
+          $ref: '#/definitions/DailyTrackingKey'
+    required:
+      - keys
+    example:
+      keys:
+        - key: U0VDUkVUU0VDUkVUU0VDUg==
+          day_number: 18363
+        - key: MTIzNDU2Nzg5MDEyMzQ1Ng==
+          day_number: 18364
+  
+  DailyTrackingKey:
+    title: Daily Tracking Key
+    type: object
+    properties:
+      key:
+        type: string
+        description: Base64 encoded Daily Tracking Key
+      day_number:
+        type: integer
+        description:
+          The day number is defined as the number of seconds since Unix Epoch Time divided by 86400.
+          
+

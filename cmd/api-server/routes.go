@@ -3,14 +3,11 @@ package main
 import (
 	"net/http"
 
+	"github.com/gorilla/mux"
 	"github.com/justinas/alice"
 	"github.com/throttled/throttled"
 	"github.com/throttled/throttled/store/memstore"
 )
-
-func stripV1Prefix(h http.Handler) http.Handler {
-	return http.StripPrefix("/v1", h)
-}
 
 func (app *Application) createRateLimiter() (*throttled.HTTPRateLimiter, error) {
 	store, err := memstore.New(65536)
@@ -38,14 +35,17 @@ func (app *Application) routes() http.Handler {
 	if err != nil {
 		app.log.Fatalf("Error creating rate limited: %v", err)
 	}
-	standardMiddleware := alice.New(app.addLog, rateLimiter.RateLimit, stripV1Prefix)
+	standardMiddleware := alice.New(app.addLog, rateLimiter.RateLimit)
 	authMiddleware := alice.New(app.requireTracingAuthentication)
 
-	mux := http.NewServeMux()
+	router := mux.NewRouter()
 
-	mux.HandleFunc("/", app.root)
-	mux.HandleFunc("/report", app.report)
-	mux.Handle("/submit", authMiddleware.Then(http.HandlerFunc(app.submit)))
+	router.HandleFunc("/", app.root).Methods("GET")
 
-	return standardMiddleware.Then(mux)
+	v1router := router.PathPrefix("/v1").Subrouter()
+	v1router.HandleFunc("/report", app.report).Methods("POST")
+	v1router.Handle("/submit-keys", authMiddleware.Then(http.HandlerFunc(app.submit))).Methods("POST")
+	v1router.Handle("/remove", authMiddleware.Then(http.HandlerFunc(app.remove))).Methods("POST")
+
+	return standardMiddleware.Then(router)
 }
