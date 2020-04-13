@@ -30,7 +30,7 @@ func (app *Application) DumpData() int {
 	if err != nil {
 		fullDump.log.Fatalf("Error creating dump file: %v", err)
 	}
-	fullDump.log.Info("Will dump full data here")
+	fullDump.log.Info("Updating full dump data file")
 	defer fullDump.Abort()
 
 	dayDumpers := make(map[string]*RecordWriter)
@@ -66,7 +66,7 @@ out:
 				if err != nil {
 					dayDumper.log.Fatalf("Error creating dump file: %v", err)
 				}
-				dayDumper.log.Infof("Will dump data for day number %v here", record.DayNumber)
+				dayDumper.log.Infof("Updating dump data for day number %v", record.DayNumber)
 				dayDumpers[record.DayNumber] = dayDumper
 			}
 
@@ -78,13 +78,11 @@ out:
 		}
 	}
 
-	fullDump.log.Debug("Closing file")
 	if err = fullDump.Close(); err != nil {
 		fullDump.log.Error(err)
 	}
 
 	for _, d := range dayDumpers {
-		d.log.Debug("Closing file")
 		if err = d.Close(); err != nil {
 			d.log.Error(err)
 		}

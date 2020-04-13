@@ -5,6 +5,17 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Launch API server",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/cmd/api-server",
+            "env": {},
+            "args": [
+                "-data", "/tmp/covid",
+            ]
+        },
+        {
             "name": "Launch build-data",
             "type": "go",
             "request": "launch",
