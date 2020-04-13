@@ -63,6 +63,9 @@ func (dks *DiskKeyStorage) AddKeyRecords(authorisationCode string, records []Key
 	}
 
 	for _, record := range records {
+		if !VerifyRecord(&record) {
+			continue
+		}
 		_, exists := recordMap[record.DailyTracingKey]
 		if !exists {
 			err = newFile.Write([]string{
