@@ -33,7 +33,7 @@ func main() {
 	} else {
 		st, err := os.Stat(*httpPath)
 		if err != nil || !st.Mode().IsDir() {
-			log.WithField("httpPath", *httpPath).Fatal("Invalid HTTP path: %v", err)
+			log.WithField("httpPath", *httpPath).Fatalf("Invalid HTTP path: %v", err)
 		}
 	}
 	app := NewApplication(config)

@@ -40,6 +40,7 @@ func (app *Application) routes() http.Handler {
 
 	router := mux.NewRouter()
 	router.HandleFunc("/_status/healthy", app.healthy).Methods("GET")
+	router.HandleFunc("/api/request-codes", app.requestCodes).Methods("POST")
 
 	if app.config.ProxyURL != nil {
 		proxy := httputil.NewSingleHostReverseProxy(app.config.ProxyURL)

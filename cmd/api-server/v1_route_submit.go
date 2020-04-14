@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"simplon.biz/corona/pkg/keystorage"
+	"simplon.biz/corona/pkg/tools"
 )
 
 type keyRecord struct {
@@ -21,11 +22,11 @@ func (app *Application) submit(w http.ResponseWriter, r *http.Request) {
 	log := getRequestLog(r)
 
 	var request submitRequest
-	err := decodeJSONBody(w, r, &request)
+	err := tools.DecodeJSONBody(w, r, &request)
 	if err != nil {
-		var mr *malformedRequest
+		var mr *tools.MalformedRequest
 		if errors.As(err, &mr) {
-			http.Error(w, mr.msg, mr.status)
+			http.Error(w, mr.Message, mr.Status)
 		} else {
 			log.Errorf("Error decoding data: %v", err.Error())
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)

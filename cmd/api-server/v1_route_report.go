@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"simplon.biz/corona/pkg/authz"
+	"simplon.biz/corona/pkg/tools"
 )
 
 type reportRequest struct {
@@ -21,11 +22,11 @@ func (app *Application) report(w http.ResponseWriter, r *http.Request) {
 	log := getRequestLog(r)
 
 	var request reportRequest
-	err := decodeJSONBody(w, r, &request)
+	err := tools.DecodeJSONBody(w, r, &request)
 	if err != nil {
-		var mr *malformedRequest
+		var mr *tools.MalformedRequest
 		if errors.As(err, &mr) {
-			http.Error(w, mr.msg, mr.status)
+			http.Error(w, mr.Message, mr.Status)
 		} else {
 			log.Errorf("Error decoding data: %v", err.Error())
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
