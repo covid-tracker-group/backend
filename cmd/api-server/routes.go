@@ -44,8 +44,8 @@ func (app *Application) routes() http.Handler {
 
 	v1router := router.PathPrefix("/v1").Subrouter()
 	v1router.HandleFunc("/report", app.report).Methods("POST")
-	v1router.Handle("/submit-keys", authMiddleware.Then(http.HandlerFunc(app.submit))).Methods("POST")
-	v1router.Handle("/remove", authMiddleware.Then(http.HandlerFunc(app.remove))).Methods("POST")
+	v1router.Handle("/submit-keys", authMiddleware.ThenFunc(app.submit)).Methods("POST")
+	v1router.Handle("/remove", authMiddleware.ThenFunc(app.remove)).Methods("POST")
 
 	return standardMiddleware.Then(router)
 }

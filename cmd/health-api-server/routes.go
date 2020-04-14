@@ -36,15 +36,17 @@ func (app *Application) routes() http.Handler {
 	if err != nil {
 		app.log.Fatalf("Error creating rate limited: %v", err)
 	}
-	standardMiddleware := alice.New(app.addLog, rateLimiter.RateLimit)
+	standardMiddleware := alice.New(app.addLog)
+	apiMiddleware := alice.New(rateLimiter.RateLimit)
 
 	router := mux.NewRouter()
 	router.HandleFunc("/_status/healthy", app.healthy).Methods("GET")
-	router.HandleFunc("/api/request-codes", app.requestCodes).Methods("POST")
+	router.Handle("/api/request-codes", apiMiddleware.ThenFunc(app.requestCodes)).Methods("POST")
 
 	if app.config.ProxyURL != nil {
 		proxy := httputil.NewSingleHostReverseProxy(app.config.ProxyURL)
-		router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		router.HandleFunc("/{path:.*}", func(w http.ResponseWriter, r *http.Request) {
+			r.URL.Path = mux.Vars(r)["path"]
 			proxy.ServeHTTP(w, r)
 		}).Methods("GET")
 	} else {
