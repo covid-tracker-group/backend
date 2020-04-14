@@ -13,4 +13,6 @@ require (
 	github.com/justinas/alice v1.2.0
 	github.com/sirupsen/logrus v1.5.0
 	github.com/throttled/throttled v2.2.4+incompatible
+	golang.org/x/crypto v0.0.0-20190923035154-9ee001bba392 // indirect
+	gopkg.in/yaml.v2 v2.2.4 // indirect
 )

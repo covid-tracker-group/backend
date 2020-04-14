@@ -38,3 +38,7 @@ UNIX timestamp in text format.
 
 - **daily tracing key**: a 16-byte number used to generate Rolling Proximity Identifiers,
   as broadcast over BLE. This definition is taken from the Apple/Google specification.
+
+- **medical practitioner**: a person or organisation who is legally allowed to run Covid tests.
+
+- **tracing authorisation token**: an access token that must be used to submit daily tracing keys.

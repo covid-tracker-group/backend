@@ -37,7 +37,13 @@
             "args": [
                 "-data", "/tmp/covid"
             ]
+        },
+        {
+            "name": "Test cmd/health-api-server",
+            "type": "go",
+            "request": "launch",
+            "mode": "test",
+            "program": "${workspaceFolder}/cmd/health-api-server"
         }
-
     ]
 }
