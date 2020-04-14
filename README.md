@@ -30,6 +30,36 @@ approach is chosen for two reasons:
 In order to allow validation the creation timestamp is also stored inside the file as a
 UNIX timestamp in text format.
 
+## Deployment
+
+The first step is to prepare some directories where data will be stored
+
+| Directory | Description |
+| -- | -- |
+| `<data-dir>/records` | Storage for daily tracing key data |
+| `<data-dir>/tokens` | Storage for daily tracing authorisation tokens |
+
+The default data directory is `/var/lib/covid-tracker`, but you can specify a different
+location with the `-data` option to all commands.
+
+### Health API server
+
+The health API server must be deployed as part of a chain of HTTP servers:
+
+```plain
++--------------+      +--------------+      +---------------+
+|              |      |              |      |               |
+|  SIAM proxy  +----->+  Health API  | +--> | Front-end app |
+|              |      |  server      |      |               |
++--------------+      +--------------+      +---------------+
+```
+
+The SIAM proxy will handle authentication and authorisation. Authorised requests
+will be forwarded to the *Health API server*. This will handle API calls internally,
+and hand of all other (GET) requests to the front-end app. It can do this in two ways:
+either by proxying to another webserver (like webpack-dev-server during development),
+or by serving files from the filesystem.
+
 ## Definitions
 
 - **day number**: the number of seconds since Unix Epoch Time divided by 86400.
