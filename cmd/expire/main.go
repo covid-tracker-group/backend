@@ -19,7 +19,7 @@ func main() {
 	log := logrus.StandardLogger()
 	log.SetLevel(logrus.DebugLevel)
 
-	tokenManager, err := tokens.NewDiskTokenManager(filepath.Join(*dataPath, "tokens"))
+	tokenManager, err := tokens.NewDiskTokenManager(filepath.Join(*dataPath, "tokens"), config.ExpireDailyTracingTokensAfter)
 	if err != nil {
 		log.Fatalf("Can not create token manager: %v", err)
 	}

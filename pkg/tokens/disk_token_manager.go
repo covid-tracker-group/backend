@@ -1,14 +1,13 @@
 package tokens
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"time"
 
-	"github.com/google/uuid"
-	"simplon.biz/corona/pkg/config"
 	"simplon.biz/corona/pkg/tools"
 )
 
@@ -19,15 +18,17 @@ var errInvalidTokenManagerPath = errors.New("Invalid token manager path")
 // DiskTokenManager is a TokenManager which stores all tokens on disk
 type DiskTokenManager struct {
 	path string
+	ttl  time.Duration
 }
 
-func NewDiskTokenManager(path string) (*DiskTokenManager, error) {
+func NewDiskTokenManager(path string, ttl time.Duration) (*DiskTokenManager, error) {
 	if err := tools.VerifyDirectoryExists(path); err != nil {
 		return nil, fmt.Errorf("%w: %v", errInvalidTokenManagerPath, err)
 	}
 
 	return &DiskTokenManager{
 		path: path,
+		ttl:  ttl,
 	}, nil
 }
 
@@ -35,21 +36,33 @@ func (dtm *DiskTokenManager) pathForToken(token string) string {
 	return filepath.Join(dtm.path, token)
 }
 
-func (dtm *DiskTokenManager) CreateToken() (string, error) {
-	token := uuid.New().String()
-	path := dtm.pathForToken(token)
-	f, err := os.Create(path)
+func (dtm *DiskTokenManager) StoreToken(token Token) error {
+	path := dtm.pathForToken(token.GetCode())
+	f, err := tools.OpenSecureFile(path)
 	if err != nil {
-		return "", err
+		return err
+	}
+	defer f.Abort()
+
+	encoder := json.NewEncoder(f)
+	encoder.SetEscapeHTML(false)
+	if err = encoder.Encode(token); err != nil {
+		return err
+	}
+
+	return f.Close()
+}
+
+func (dtm *DiskTokenManager) GetToken(code string, token interface{}) error {
+	path := dtm.pathForToken(code)
+	f, err := os.Open(path)
+	if err != nil {
+		return err
 	}
 	defer f.Close()
-	now := time.Now().Unix()
-	_, err = fmt.Fprintf(f, "%d", now)
-	if err != nil {
-		_ = os.Remove(path)
-		return "", err
-	}
-	return token, nil
+
+	decoder := json.NewDecoder(f)
+	return decoder.Decode(token)
 }
 
 func (dtm *DiskTokenManager) VerifyToken(token string) (bool, error) {
@@ -62,7 +75,7 @@ func (dtm *DiskTokenManager) VerifyToken(token string) (bool, error) {
 		return false, nil
 	}
 
-	if st.ModTime().Before(time.Now().Add(-config.ExpireDailyTracingTokensAfter)) {
+	if st.ModTime().Before(time.Now().Add(-dtm.ttl)) {
 		return false, nil
 	}
 
@@ -85,7 +98,7 @@ func (dtm *DiskTokenManager) Expire(onExpire func(string)) error {
 	}
 	defer dir.Close()
 
-	deleteBefore := time.Now().Add(-config.ExpireDailyTracingTokensAfter)
+	deleteBefore := time.Now().Add(-dtm.ttl)
 
 	for {
 		entries, err := dir.Readdir(filedirBatchSize)

@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"simplon.biz/corona/pkg/authz"
+	"simplon.biz/corona/pkg/tokens"
 	"simplon.biz/corona/pkg/tools"
 )
 
@@ -48,15 +49,15 @@ func (app *Application) report(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tracingAuthCode, err := app.tokenManager.CreateToken()
-	if err != nil {
+	tracingAuthCode := tokens.NewTracingAuthenticationToken()
+	if err = app.tokenManager.StoreToken(tracingAuthCode); err != nil {
 		log.WithField("error", err).Error("Error creating tracing auth code")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
 	if len(request.Keys) > 0 {
-		if err = app.storeRecords(tracingAuthCode, request.Keys); err != nil {
+		if err = app.storeRecords(tracingAuthCode.GetCode(), request.Keys); err != nil {
 			log.WithField("error", err).Error("Error adding key records")
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
@@ -64,7 +65,7 @@ func (app *Application) report(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := reportResponse{
-		AuthorisationCode: tracingAuthCode,
+		AuthorisationCode: tracingAuthCode.GetCode(),
 	}
 
 	w.WriteHeader(http.StatusCreated)

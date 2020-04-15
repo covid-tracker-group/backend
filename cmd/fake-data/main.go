@@ -24,7 +24,7 @@ func main() {
 	log := logrus.StandardLogger()
 	log.SetLevel(logrus.DebugLevel)
 
-	tokenManager, err := tokens.NewDiskTokenManager(filepath.Join(*dataPath, "tokens"))
+	tokenManager, err := tokens.NewDiskTokenManager(filepath.Join(*dataPath, "tokens"), config.ExpireDailyTracingTokensAfter)
 	if err != nil {
 		log.Fatalf("Can not create token manager: %v", err)
 	}
@@ -34,22 +34,22 @@ func main() {
 		log.Fatalf("Can not create key storage: %v", err)
 	}
 
-	tokens := make([]string, 0, 10000)
+	codes := make([]string, 0, 10000)
 	for i := 0; i < 10000; i++ {
-		token, err := tokenManager.CreateToken()
-		if err != nil {
+		token := tokens.NewTracingAuthenticationToken()
+		if err = tokenManager.StoreToken(token); err != nil {
 			log.Fatalf("Error creating token: %v", err)
 		}
-		tokens = append(tokens, token)
+		codes = append(codes, token.GetCode())
 	}
-	log.Infof("Generated %d authorisation tokens", len(tokens))
+	log.Infof("Generated %d authorisation tokens", len(codes))
 
 	now := time.Now()
 	thePast := now.Add(time.Hour * -(24 * 15))
 	var expiredTokens []string
-	for i := 0; i < len(tokens)/10; i++ {
-		expiredTokens = append(expiredTokens, tokens[i])
-		path := filepath.Join(*dataPath, "tokens", tokens[i])
+	for i := 0; i < len(codes)/10; i++ {
+		expiredTokens = append(expiredTokens, codes[i])
+		path := filepath.Join(*dataPath, "tokens", codes[i])
 		_ = os.Chtimes(path, now, thePast)
 	}
 	log.Infof("Expired %d authorisation tokens", len(expiredTokens))
@@ -59,7 +59,7 @@ func main() {
 
 	recordsGenerated := 0
 	tracingKey := make([]byte, 16)
-	for _, token := range tokens {
+	for _, code := range codes {
 		days := rand.Intn(7) + 1
 		records = records[:0]
 		for j := 0; j < days; j++ {
@@ -73,10 +73,10 @@ func main() {
 			recordsGenerated += 1
 
 		}
-		err = keyStorage.AddKeyRecords(token, records)
+		err = keyStorage.AddKeyRecords(code, records)
 		if err != nil {
 			log.Fatalf("Error writing key record: %v", err)
 		}
 	}
-	log.Infof("Generated %d daily key records for %d authorisation tokens", recordsGenerated, len(tokens))
+	log.Infof("Generated %d daily key records for %d authorisation tokens", recordsGenerated, len(codes))
 }
