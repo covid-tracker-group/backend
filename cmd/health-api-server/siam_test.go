@@ -44,7 +44,7 @@ func TestDecodeSAML(t *testing.T) {
 
 	raw_assertion := getSAMLAssertionFromHTTPHeader(r)
 	if len(raw_assertion) != 2661 {
-		t. Fatalf("Got unexpected length while extracting assertion from request: %d", len(raw_assertion))
+		t.Fatalf("Got unexpected length while extracting assertion from request: %d", len(raw_assertion))
 	}
 	principal, err := decodeSAML(r)
 	if err != nil {
