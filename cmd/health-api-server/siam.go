@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/base64"
 	"encoding/xml"
 	"fmt"
 	"net/http"
@@ -24,7 +25,14 @@ func getSAMLAssertionFromHTTPHeader(r *http.Request) []byte {
 		assertion = append(assertion, []byte(value)...)
 		i++
 	}
-	return assertion
+	if len(assertion) == 0 {
+		return nil
+	}
+	decoded, err := base64.StdEncoding.DecodeString(string(assertion))
+	if err != nil {
+		return nil
+	}
+	return decoded
 }
 
 func getSamlStringAttribute(attr *SAMLAttribute) string {
