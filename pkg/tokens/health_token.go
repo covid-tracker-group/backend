@@ -13,8 +13,8 @@ type HealthTestAuthenticationToken struct {
 	Uid string `json:"uid"`
 }
 
-func NewHealthTestAuthenticationToken(uid string) HealthTestAuthenticationToken {
-	return HealthTestAuthenticationToken{
+func NewHealthTestAuthenticationToken(uid string) *HealthTestAuthenticationToken {
+	return &HealthTestAuthenticationToken{
 		BaseToken: BaseToken{
 			Code:      tools.GenerateCode(),
 			CreatedAt: time.Now(),

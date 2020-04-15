@@ -14,7 +14,7 @@ func (t BaseToken) GetCode() string {
 	return t.Code
 }
 
-func (t BaseToken) SetCode(code string) {
+func (t *BaseToken) SetCode(code string) {
 	t.Code = code
 }
 

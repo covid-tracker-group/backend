@@ -53,7 +53,7 @@ func (dtm *DiskTokenManager) StoreToken(token Token) error {
 	return f.Close()
 }
 
-func (dtm *DiskTokenManager) GetToken(code string, token interface{}) error {
+func (dtm *DiskTokenManager) GetToken(code string, token Token) error {
 	path := dtm.pathForToken(code)
 	f, err := os.Open(path)
 	if err != nil {
@@ -62,7 +62,12 @@ func (dtm *DiskTokenManager) GetToken(code string, token interface{}) error {
 	defer f.Close()
 
 	decoder := json.NewDecoder(f)
-	return decoder.Decode(token)
+	err = decoder.Decode(token)
+	if err != nil {
+		return err
+	}
+	token.SetCode(code)
+	return nil
 }
 
 func (dtm *DiskTokenManager) VerifyToken(token string) (bool, error) {

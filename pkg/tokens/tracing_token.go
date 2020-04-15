@@ -11,8 +11,8 @@ type TracingAuthenticationToken struct {
 	BaseToken
 }
 
-func NewTracingAuthenticationToken() TracingAuthenticationToken {
-	return TracingAuthenticationToken{
+func NewTracingAuthenticationToken() *TracingAuthenticationToken {
+	return &TracingAuthenticationToken{
 		BaseToken{
 			Code:      uuid.New().String(),
 			CreatedAt: time.Now(),
