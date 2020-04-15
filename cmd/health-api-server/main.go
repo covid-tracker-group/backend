@@ -14,6 +14,7 @@ import (
 )
 
 var bindAddress = flag.String("bind", "127.0.0.1:8080", "Address for HTTP server")
+var dataPath = flag.String("data", fmt.Sprintf("/var/lib/%s", config.AppName), "Directory to store all data")
 var proxyURL = flag.String("proxy", "", "URL to proxy web app requests to")
 var httpPath = flag.String("httpData", fmt.Sprintf("/var/lib/%s/http", config.AppName), "Folder with web app")
 
@@ -23,6 +24,7 @@ func main() {
 	var err error
 	config := Configuration{
 		BindAddress: *bindAddress,
+		DataPath:    *dataPath,
 		HttpPath:    *httpPath,
 	}
 	if *proxyURL != "" {

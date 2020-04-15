@@ -21,7 +21,7 @@ func (app *Application) requireTracingAuthentication(next http.Handler) http.Han
 		if strings.ToLower(authHeader[:7]) == "bearer " {
 			var err error
 			token = authHeader[7:]
-			hasAuth, err = app.tokenManager.VerifyToken(token)
+			hasAuth, err = app.tracingAuthTokenManager.VerifyToken(token)
 			if err != nil {
 				app.log.Errorf("Error verifying auth bearer: %v", err)
 			}

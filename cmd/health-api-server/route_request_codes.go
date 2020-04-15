@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"simplon.biz/corona/pkg/config"
+	"simplon.biz/corona/pkg/tokens"
 	"simplon.biz/corona/pkg/tools"
 )
 
@@ -45,8 +46,15 @@ func (app *Application) requestCodes(w http.ResponseWriter, r *http.Request) {
 		Expires: time.Now().Add(config.ExpireHealthAuthorisationTokensAfter),
 		Codes:   make([]string, request.Count),
 	}
+	// TODO: grab uid from SIAM headers
 	for i := range response.Codes {
-		response.Codes[i] = tools.GenerateCode()
+		token := tokens.NewHealthTestAuthenticationToken("uid")
+		if err = app.testingAuthTokenManager.StoreToken(token); err != nil {
+			log.WithError(err).Error("Error storing health test auth roken")
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+		response.Codes[i] = token.GetCode()
 	}
 
 	w.WriteHeader(http.StatusCreated)

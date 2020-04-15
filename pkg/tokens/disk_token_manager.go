@@ -54,6 +54,14 @@ func (dtm *DiskTokenManager) StoreToken(token Token) error {
 }
 
 func (dtm *DiskTokenManager) GetToken(code string, token Token) error {
+	valid, err := dtm.VerifyToken(code)
+	if !valid {
+		return errors.New("Code is not valid")
+	}
+	if err != nil {
+		return err
+	}
+
 	path := dtm.pathForToken(code)
 	f, err := os.Open(path)
 	if err != nil {
