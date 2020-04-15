@@ -41,6 +41,7 @@ func (app *Application) routes() http.Handler {
 	router := mux.NewRouter()
 
 	router.HandleFunc("/", app.root).Methods("GET")
+	router.HandleFunc("/_status/healthy", app.root).Methods("GET")
 
 	v1router := router.PathPrefix("/v1").Subrouter()
 	v1router.HandleFunc("/report", app.report).Methods("POST")
