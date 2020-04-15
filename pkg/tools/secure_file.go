@@ -57,6 +57,11 @@ func (sf *SecureFile) Close() error {
 		return err
 	}
 
+	if err := os.Chmod(sf.file.Name(), 0644); err != nil {
+		_ = os.Remove(sf.file.Name())
+		return err
+	}
+
 	if err := os.Rename(sf.file.Name(), sf.path); err != nil {
 		return fmt.Errorf("Error moving temporary file into place: %w", err)
 	}
