@@ -50,7 +50,7 @@ func (app *Application) routes() http.Handler {
 			proxy.ServeHTTP(w, r)
 		}).Methods("GET")
 	} else {
-		router.Handle("/", http.FileServer(http.Dir(app.config.HttpPath)))
+		router.Handle("/{path:.*}", http.FileServer(http.Dir(app.config.HttpPath)))
 	}
 
 	return standardMiddleware.Then(router)
