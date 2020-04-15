@@ -36,7 +36,7 @@ func (app *Application) routes() http.Handler {
 	if err != nil {
 		app.log.Fatalf("Error creating rate limited: %v", err)
 	}
-	standardMiddleware := alice.New(app.addLog)
+	standardMiddleware := alice.New(app.addLog, addSecurityHeaders)
 	apiMiddleware := alice.New(rateLimiter.RateLimit)
 
 	router := mux.NewRouter()
