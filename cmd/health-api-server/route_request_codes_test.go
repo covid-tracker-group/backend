@@ -8,13 +8,21 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/golang/mock/gomock"
 	"github.com/sirupsen/logrus/hooks/test"
+	"simplon.biz/corona/pkg/mocks"
 )
 
 func TestRequestCodes(t *testing.T) {
 	logger, _ := test.NewNullLogger()
 	logEntry := logger.WithField("test", true)
-	app := Application{}
+	mockCtrl := gomock.NewController(t)
+	testingAuthTokenManager := mocks.NewMockTokenManager(mockCtrl)
+	testingAuthTokenManager.EXPECT().StoreToken(gomock.Any()).Times(10)
+
+	app := Application{
+		testingAuthTokenManager: testingAuthTokenManager,
+	}
 
 	makeRequest := func(count int) *http.Request {
 		data := fmt.Sprintf(`{"count": %d}`, count)
