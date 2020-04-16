@@ -54,20 +54,21 @@ func (dtm *DiskTokenManager) StoreToken(token Token) error {
 }
 
 func (dtm *DiskTokenManager) GetToken(code string, token Token) error {
-	valid, err := dtm.VerifyToken(code)
-	if !valid {
-		return errors.New("Code is not valid")
-	}
-	if err != nil {
-		return err
-	}
-
 	path := dtm.pathForToken(code)
 	f, err := os.Open(path)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
+
+	st, err := f.Stat()
+	if err != nil {
+		return err
+	}
+
+	if !dtm.verifyTokenFromStat(st) {
+		return errors.New("Code is not valid")
+	}
 
 	decoder := json.NewDecoder(f)
 	err = decoder.Decode(token)
@@ -84,15 +85,11 @@ func (dtm *DiskTokenManager) VerifyToken(token string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	if !st.Mode().IsRegular() {
-		return false, nil
-	}
+	return dtm.verifyTokenFromStat(st), nil
+}
 
-	if st.ModTime().Before(time.Now().Add(-dtm.ttl)) {
-		return false, nil
-	}
-
-	return st.Mode().IsRegular(), nil
+func (dtm *DiskTokenManager) verifyTokenFromStat(st os.FileInfo) bool {
+	return st.Mode().IsRegular() && st.ModTime().After(time.Now().Add(-dtm.ttl))
 }
 
 func (dtm *DiskTokenManager) RetractToken(token string) error {
