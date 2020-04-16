@@ -24,10 +24,10 @@ jobs:
             ${{ runner.os }}-go-
 
       - name: Bootstrap
-        shell: bash
+        # shell: bash
         run: |
-          go get ./...
-          export PATH="${PATH}:${GOPATH:-$HOME/go/bin}"
+          go get github.com/golang/mock/mockgen
+          # export PATH="${PATH}:${GOPATH:-$HOME/go/bin}"
           go generate ./...
 
       - name: Run tests
