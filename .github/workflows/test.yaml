@@ -18,6 +18,7 @@ jobs:
       - name: Bootstrap
         run: |
           go get ./...
+          export PATH="$PATH":${GOPATH:-${{ github.workspace}}/bin}
           go generate ./...
 
       - name: Run tests
