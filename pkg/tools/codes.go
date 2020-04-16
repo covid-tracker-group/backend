@@ -13,13 +13,14 @@ import (
 // - D, O, Q, 0
 // - I, J
 // - U, V
-var codeRunes = []rune("ABCFGHKLMNPRSTWXYZ2456789")
+// - N, M (phoneticaly)
+var codeRunes = []rune("ABCFGHKLPRSTWXYZ2456789")
 
 // GenerateCode generates an easily readable random code.
 //
 // The code consistens of three groups of two characters, This
 // grouping is chosen to prevent a group from forming a bad word.
-// This gives a total 244 million options, or an entropy of 27 bits.
+// This gives a total 308 million options, or an entropy of 28 bits.
 func GenerateCode() string {
 	code := make([]rune, 7)
 	for i := range code {
