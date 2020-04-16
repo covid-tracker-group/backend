@@ -24,8 +24,10 @@ jobs:
             ${{ runner.os }}-go-
 
       - name: Bootstrap
+        shell: bash
         run: |
           go get github.com/golang/mock/mockgen
+          go get golang.org/x/lint/golint
           export PATH=$PATH:$HOME/go/bin
           go generate ./...
 
@@ -33,3 +35,9 @@ jobs:
         run: |
           go test ./...
           go vet ./...
+
+      - name: Lint
+        shell: bash
+        run: |
+          export PATH=$PATH:$HOME/go/bin
+          golint ./...

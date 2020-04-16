@@ -14,6 +14,7 @@ require (
 	github.com/justinas/alice v1.2.0
 	github.com/sirupsen/logrus v1.5.0
 	github.com/throttled/throttled v2.2.4+incompatible
+	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
 	golang.org/x/sys v0.0.0-20190922100055-0a153f010e69 // indirect
 	golang.org/x/tools v0.0.0-20200416061724-5744cfde56ed // indirect
 	gopkg.in/yaml.v2 v2.2.4 // indirect
